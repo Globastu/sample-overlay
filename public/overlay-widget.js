@@ -365,7 +365,9 @@ Constraints met:
       const reachMax = typeof o.maxPerOrder === 'number' && qty >= o.maxPerOrder;
       const price = formatMoney(o.currency || currency || 'EUR', o.amountMinor);
       const maxNote = o.maxPerOrder ? `Max per order: ${o.maxPerOrder}` : '';
-      const img = o.imageUrl ? `<img alt="${escapeHtml(o.name)}" src="${escapeAttr(o.imageUrl)}">` : `<div style="font-size:28px;">🛍️</div>`;
+      const srcRaw = o.imageUrl || o.image || o.imageURL;
+      const src = typeof srcRaw === 'string' && srcRaw ? resolveAssetUrl(srcRaw) : '';
+      const img = src ? `<img alt="${escapeHtml(o.name)}" src="${escapeAttr(src)}">` : `<div style="font-size:28px;">🛍️</div>`;
       return `
         <div class="ow-card">
           <div class="ow-media">${img}</div>
@@ -603,6 +605,12 @@ Constraints met:
     const up = String(msg || 'UNKNOWN').toUpperCase().replace(/[^A-Z0-9_]/g, '_');
     return up || 'UNKNOWN';
   }
+  function resolveAssetUrl(s) {
+    if (!s || typeof s !== 'string') return s;
+    if (/^(https?:|data:|blob:)/i.test(s)) return s;
+    try { return new URL(s, API_BASE).toString(); } catch (_) { return s; }
+  }
+
   // Initial passive health check shortly after load
   setTimeout(runHealthCheck, 200);
 })();
