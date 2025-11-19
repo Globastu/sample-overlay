@@ -1,0 +1,10 @@
+node_modules/
+.DS_Store
+.env
+.env.*
+.vercel
+npm-debug.log*
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Overlay Widget Demo</title>
+    <style>
+      body { font: 16px/1.5 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #0f172a; margin: 0; }
+      header { padding: 24px; background: #0ea5e9; color: #fff; }
+      main { padding: 24px; max-width: 960px; margin: 0 auto; }
+      .hero { display: grid; grid-template-columns: 1fr; gap: 16px; }
+      .hero img { width: 100%; border-radius: 10px; }
+      .grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-top: 24px; }
+      .card { border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px; }
+      footer { padding: 24px; background: #f1f5f9; margin-top: 40px; }
+      @media (max-width: 760px) { .grid { grid-template-columns: 1fr; } }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1 style="margin:0;">Sample Company</h1>
+      <div>Demo page for the floating overlay widget</div>
+    </header>
+    <main>
+      <section class="hero">
+        <div>
+          <h2>Modern B2B Platform</h2>
+          <p>
+            Explore our features below and click the floating Gifts button to open the overlay widget.
+            On first open, it will fetch demo offers from the local BFF and let you checkout.
+          </p>
+        </div>
+        <img src="https://picsum.photos/seed/b2b/1200/600" alt="Placeholder banner" />
+      </section>
+
+      <section class="grid">
+        <div class="card">
+          <h3>Feature One</h3>
+          <p>Streamline procurement across teams with centralized controls.</p>
+        </div>
+        <div class="card">
+          <h3>Feature Two</h3>
+          <p>Automate approvals and notifications to speed up operations.</p>
+        </div>
+        <div class="card">
+          <h3>Feature Three</h3>
+          <p>Gain visibility with detailed reporting and analytics dashboards.</p>
+        </div>
+        <div class="card">
+          <h3>Security</h3>
+          <p>Enterprise-grade security and compliance baked in.</p>
+        </div>
+        <div class="card">
+          <h3>Integrations</h3>
+          <p>Connect your tools and automate workflows.</p>
+        </div>
+        <div class="card">
+          <h3>Support</h3>
+          <p>24/7 support and dedicated success team.</p>
+        </div>
+      </section>
+    </main>
+    <footer>
+      <div>© 2025 Sample Company</div>
+    </footer>
+
+    <!-- Include the overlay widget script. Adjust data attributes as needed. -->
+    <script src="/overlay-widget.js"
+            data-merchant-id="demo-merchant-1"
+            data-api-key="DEMO_KEY_123"></script>
+  </body>
+  </html>
+
