@@ -62,6 +62,7 @@ Constraints met:
   let view = 'catalog'; // 'catalog' | 'checkout' | 'confirm' | 'error' | 'loading'
   let lastErrorMessage = '';
   let lastOrder = null; // store confirmation
+  const health = { status: 'idle', code: '', last: 0 }; // idle | checking | ok | error
 
   // Utilities
   function cls(parts) { return parts.filter(Boolean).join(' '); }
@@ -170,6 +171,11 @@ Constraints met:
     .ow-fab:hover { background: #0284c7; }
     .ow-fab:active { transform: translateY(1px); }
     .ow-fab .ow-dot { font-size: 18px; }
+    .ow-status-dot { width: 10px; height: 10px; border-radius: 9999px; display: inline-block; background: #cbd5e1; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.08); }
+    .ow-status-dot.ok { background: #16a34a; }
+    .ow-status-dot.err { background: #dc2626; }
+    .ow-status-dot.checking { background: #f59e0b; animation: ow-pulse 1s ease-in-out infinite; }
+    @keyframes ow-pulse { 0%,100%{ opacity:.6 } 50%{ opacity:1 } }
 
     .ow-modal { position: fixed; inset: 0; display: none; z-index: 2147483646; }
     .ow-modal.open { display: block; }
@@ -183,6 +189,13 @@ Constraints met:
     .ow-title { margin: 0; font-size: 16px; font-weight: 700; color: #0f172a; }
     .ow-close { border: none; background: transparent; font-size: 18px; cursor: pointer; color: #334155; padding: 6px; }
     .ow-close:hover { color: #0f172a; }
+    .ow-head-right { display:flex; align-items:center; gap:8px; }
+    .ow-status-pill { font-size: 12px; color: #0f172a; background:#e2e8f0; border-radius:9999px; padding:2px 8px; }
+    .ow-status-pill.ok { background:#dcfce7; color:#166534; }
+    .ow-status-pill.err { background:#fee2e2; color:#991b1b; }
+    .ow-status-pill.checking { background:#fef3c7; color:#92400e; }
+    .ow-status-retry { border:none; background:#e2e8f0; color:#0f172a; border-radius:6px; padding:4px 8px; cursor:pointer; }
+    .ow-status-retry:hover { background:#cbd5e1; }
     .ow-body { overflow: auto; padding: 12px; }
     .ow-footer { padding: 12px; border-top: 1px solid #e2e8f0; display: flex; gap: 8px; justify-content: flex-end; background: #fff; }
 
@@ -238,13 +251,18 @@ Constraints met:
     <button class="ow-fab" type="button" aria-haspopup="dialog" aria-controls="ow-modal">
       <span class="ow-dot">🎁</span>
       <span>Gifts</span>
+      <span class="ow-status-dot" id="ow-status-dot" aria-hidden="true"></span>
     </button>
     <div id="ow-modal" class="ow-modal" role="dialog" aria-modal="true" aria-label="Gift Cards Modal">
       <div class="ow-backdrop"></div>
       <div class="ow-dialog">
         <div class="ow-header">
           <h2 class="ow-title">Gift Cards</h2>
-          <button class="ow-close" type="button" aria-label="Close">✕</button>
+          <div class="ow-head-right">
+            <span class="ow-status-pill" id="ow-status-label">Status: Idle</span>
+            <button class="ow-status-retry" type="button" id="ow-status-retry" title="Recheck" aria-label="Recheck">↻</button>
+            <button class="ow-close" type="button" aria-label="Close">✕</button>
+          </div>
         </div>
         <div class="ow-body" id="ow-body"></div>
         <div class="ow-footer" id="ow-footer"></div>
@@ -258,6 +276,9 @@ Constraints met:
   const bodyEl = container.querySelector('#ow-body');
   const footerEl = container.querySelector('#ow-footer');
   const closeBtn = container.querySelector('.ow-close');
+  const statusDot = container.querySelector('#ow-status-dot');
+  const statusLabel = container.querySelector('#ow-status-label');
+  const statusRetry = container.querySelector('#ow-status-retry');
 
   // Event wiring
   fabBtn.addEventListener('click', async () => {
@@ -272,6 +293,7 @@ Constraints met:
     if (e.key === 'Escape') closeModal();
   };
   window.addEventListener('keydown', escHandler);
+  if (statusRetry) statusRetry.addEventListener('click', () => runHealthCheck());
 
   // Render functions
   function renderLoading(message) {
@@ -297,6 +319,44 @@ Constraints met:
     footerEl.querySelector('#ow-back').addEventListener('click', () => {
       setView('catalog');
     });
+  }
+
+  function updateStatusUI() {
+    if (!statusDot || !statusLabel) return;
+    statusDot.classList.remove('ok','err','checking');
+    statusLabel.classList.remove('ok','err','checking');
+    let text = 'Status: Idle';
+    if (health.status === 'checking') { statusDot.classList.add('checking'); statusLabel.classList.add('checking'); text = 'Checking…'; }
+    else if (health.status === 'ok') { statusDot.classList.add('ok'); statusLabel.classList.add('ok'); text = 'Connected'; }
+    else if (health.status === 'error') { statusDot.classList.add('err'); statusLabel.classList.add('err'); text = 'Error' + (health.code ? `: ${health.code}` : ''); }
+    statusLabel.textContent = text;
+    statusLabel.title = health.last ? `${text} • ${new Date(health.last).toLocaleTimeString()}` : text;
+  }
+
+  async function runHealthCheck() {
+    health.status = 'checking'; health.code = ''; health.last = Date.now(); updateStatusUI();
+    const url = `${API_BASE}/api/bff/demo/catalog?merchantId=${encodeURIComponent(MERCHANT_ID)}`;
+    const headers = {}; if (API_KEY) headers['x-overlay-key'] = API_KEY;
+    const ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    const timeout = setTimeout(() => { try { ctrl && ctrl.abort(); } catch(_){} }, 8000);
+    let resp;
+    try {
+      resp = await fetch(url, { method: 'GET', headers, cache: 'no-store', signal: ctrl ? ctrl.signal : undefined });
+    } catch (e) {
+      clearTimeout(timeout);
+      health.status = 'error'; health.code = 'NETWORK'; health.last = Date.now(); updateStatusUI();
+      return;
+    }
+    clearTimeout(timeout);
+    if (resp && resp.ok) {
+      health.status = 'ok'; health.code = ''; health.last = Date.now(); updateStatusUI();
+      return;
+    }
+    try {
+      const data = await resp.json();
+      if (data && data.error) health.code = data.error;
+    } catch (_) {}
+    health.status = 'error'; if (!health.code) health.code = 'REQUEST_FAILED'; health.last = Date.now(); updateStatusUI();
   }
 
   function renderCatalog(offers, currency) {
@@ -514,6 +574,7 @@ Constraints met:
     isOpen = true;
     modal.classList.add('open');
     setView('catalog'); // fetch on first open via view
+    runHealthCheck();
   }
 
   function closeModal() {
@@ -542,5 +603,6 @@ Constraints met:
     const up = String(msg || 'UNKNOWN').toUpperCase().replace(/[^A-Z0-9_]/g, '_');
     return up || 'UNKNOWN';
   }
+  // Initial passive health check shortly after load
+  setTimeout(runHealthCheck, 200);
 })();
-
