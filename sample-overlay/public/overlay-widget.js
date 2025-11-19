@@ -288,7 +288,7 @@ Constraints met:
     bodyEl.innerHTML = `
       <div class="ow-error">
         <div>Something went wrong${code ? ':' : ''} ${code ? `<code>${code}</code>` : ''}</div>
-        ${message ? `<div style="margin-top:6px;color:#64748b">${message}</div>` : ''}
+        ${message ? `<div style=\"margin-top:6px;color:#64748b\">${message}</div>` : ''}
       </div>
     `;
     footerEl.innerHTML = `
@@ -382,7 +382,7 @@ Constraints met:
       const offer = offers.find(o => o.id === it.offerId);
       const name = offer ? offer.name : it.offerId;
       const price = offer ? formatMoney(offer.currency || 'EUR', offer.amountMinor) : '';
-      return `<li><strong>${escapeHtml(name)}</strong> × ${it.qty} <span style="color:#64748b">(${price} each)</span></li>`;
+      return `<li><strong>${escapeHtml(name)}</strong> × ${it.qty} <span style=\"color:#64748b\">(${price} each)</span></li>`;
     }).join('');
     bodyEl.innerHTML = `
       <div class="ow-form">
@@ -455,7 +455,7 @@ Constraints met:
 
   function renderConfirm(order) {
     const total = formatMoney(order.currency || 'EUR', order.totalMinor);
-    const codes = (order.giftCards || []).map(g => `<li><span class="ow-mono">${escapeHtml(g.code)}</span> — ${escapeHtml(g.recipientEmail)} (${escapeHtml(g.currency || order.currency)} ${((g.valueMinor || 0)/100).toFixed(2)})</li>`).join('');
+    const codes = (order.giftCards || []).map(g => `<li><span class=\"ow-mono\">${escapeHtml(g.code)}</span> — ${escapeHtml(g.recipientEmail)} (${escapeHtml(g.currency || order.currency)} ${((g.valueMinor || 0)/100).toFixed(2)})</li>`).join('');
     bodyEl.innerHTML = `
       <div class="ow-confirm">
         <div style="font-size:16px;font-weight:700;margin-bottom:6px;">Order Confirmed</div>
@@ -543,3 +543,4 @@ Constraints met:
     return up || 'UNKNOWN';
   }
 })();
+
